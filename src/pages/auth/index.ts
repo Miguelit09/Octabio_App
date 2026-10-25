@@ -1,17 +1,25 @@
+import { button } from "../../components/buttons";
 import { demoHint } from "../../components/demo-hint";
+import { checkboxField, field } from "../../components/forms";
 import { authShell, shell } from "../../components/shell";
 import { showToast } from "../../components/toast";
-import { field, pageTitle } from "../../components/ui";
+import { pageTitle } from "../../components/ui";
 import { clear, el } from "../../lib/dom";
 import { navigate } from "../../router";
 import { homeForRole, store } from "../../state/store";
 
 export function renderWelcome(root: HTMLElement): void {
   clear(root);
-  const login = el("button", { type: "button", className: "btn-primary" }, ["Iniciar sesión"]);
-  login.addEventListener("click", () => navigate("#/login"));
-  const register = el("button", { type: "button", className: "btn-secondary" }, ["Crear cuenta"]);
-  register.addEventListener("click", () => navigate("#/registro"));
+  const login = button({
+    variant: "primary",
+    label: "Iniciar sesión",
+    onClick: () => navigate("#/login"),
+  });
+  const register = button({
+    variant: "secondary",
+    label: "Crear cuenta",
+    onClick: () => navigate("#/registro"),
+  });
 
   root.append(
     authShell([
@@ -44,15 +52,19 @@ export function renderLogin(root: HTMLElement, opts?: { error?: string }): void 
       error: opts?.error,
     }),
   );
-  const submit = el("button", { type: "submit", className: "btn-primary" }, ["Entrar"]);
-  const forgot = el("button", { type: "button", className: "btn-ghost self-start px-0" }, [
-    "¿Olvidaste tu contraseña?",
-  ]);
-  forgot.addEventListener("click", () => navigate("#/recuperar"));
-  const toRegister = el("button", { type: "button", className: "btn-ghost self-center" }, [
-    "Crear cuenta de estudiante",
-  ]);
-  toRegister.addEventListener("click", () => navigate("#/registro"));
+  const submit = button({ variant: "primary", type: "submit", label: "Entrar" });
+  const forgot = button({
+    variant: "ghost",
+    label: "¿Olvidaste tu contraseña?",
+    className: "self-start px-0",
+    onClick: () => navigate("#/recuperar"),
+  });
+  const toRegister = button({
+    variant: "ghost",
+    label: "Crear cuenta de estudiante",
+    className: "self-center",
+    onClick: () => navigate("#/registro"),
+  });
 
   form.append(forgot, submit, toRegister);
   form.addEventListener("submit", (e) => {
@@ -90,21 +102,17 @@ export function renderRegister(root: HTMLElement, opts?: { error?: string }): vo
     }),
     field({ id: "password", label: "Contraseña", type: "password" }),
     field({ id: "confirm", label: "Confirmar contraseña", type: "password" }),
+    checkboxField({ id: "terms", label: "Acepto los términos y condiciones de Octabio." }),
   );
+  const submit = button({ variant: "primary", type: "submit", label: "Crear cuenta" });
+  const toLogin = button({
+    variant: "ghost",
+    label: "Ya tengo cuenta",
+    className: "self-center",
+    onClick: () => navigate("#/login"),
+  });
 
-  const termsWrap = el("label", {
-    className: "flex items-start gap-3 text-sm text-on-surface-variant",
-  }, [
-    el("input", { type: "checkbox", id: "terms", className: "mt-1 h-4 w-4" }),
-    "Acepto los términos y condiciones de Octabio.",
-  ]);
-  const submit = el("button", { type: "submit", className: "btn-primary" }, ["Crear cuenta"]);
-  const toLogin = el("button", { type: "button", className: "btn-ghost self-center" }, [
-    "Ya tengo cuenta",
-  ]);
-  toLogin.addEventListener("click", () => navigate("#/login"));
-
-  form.append(termsWrap, submit, toLogin);
+  form.append(submit, toLogin);
   form.addEventListener("submit", (e) => {
     e.preventDefault();
     const name = (form.querySelector("#name") as HTMLInputElement).value.trim();
@@ -143,8 +151,11 @@ export function renderRegister(root: HTMLElement, opts?: { error?: string }): vo
 
 export function renderRegisterSuccess(root: HTMLElement): void {
   clear(root);
-  const go = el("button", { type: "button", className: "btn-primary" }, ["Ir a iniciar sesión"]);
-  go.addEventListener("click", () => navigate("#/login"));
+  const go = button({
+    variant: "primary",
+    label: "Ir a iniciar sesión",
+    onClick: () => navigate("#/login"),
+  });
   root.append(
     authShell([
       pageTitle("Revisa tu correo", "Enviamos una confirmación simulada. Ya puedes iniciar sesión."),
@@ -160,15 +171,20 @@ export function renderForgot(root: HTMLElement): void {
   clear(root);
   const form = el("form", { className: "flex flex-col gap-4" });
   form.append(field({ id: "email", label: "Correo", type: "email", placeholder: "tu@correo.com" }));
-  const submit = el("button", { type: "submit", className: "btn-primary" }, ["Enviar enlace"]);
+  const submit = button({ variant: "primary", type: "submit", label: "Enviar enlace" });
   form.append(submit);
   form.addEventListener("submit", (e) => {
     e.preventDefault();
     navigate("#/recuperar/enviado");
   });
-  const back = el("button", { type: "button", className: "btn-ghost self-center" }, ["Volver al login"]);
-  back.addEventListener("click", () => navigate("#/login"));
-  form.append(back);
+  form.append(
+    button({
+      variant: "ghost",
+      label: "Volver al login",
+      className: "self-center",
+      onClick: () => navigate("#/login"),
+    }),
+  );
 
   root.append(
     authShell([
@@ -180,12 +196,16 @@ export function renderForgot(root: HTMLElement): void {
 
 export function renderForgotSent(root: HTMLElement): void {
   clear(root);
-  const go = el("button", { type: "button", className: "btn-primary" }, ["Volver al login"]);
-  go.addEventListener("click", () => navigate("#/login"));
-  const fake = el("button", { type: "button", className: "btn-secondary" }, [
-    "Simular abrir enlace",
-  ]);
-  fake.addEventListener("click", () => navigate("#/nueva-contrasena"));
+  const go = button({
+    variant: "primary",
+    label: "Volver al login",
+    onClick: () => navigate("#/login"),
+  });
+  const fake = button({
+    variant: "secondary",
+    label: "Simular abrir enlace",
+    onClick: () => navigate("#/nueva-contrasena"),
+  });
 
   root.append(
     authShell([
@@ -205,7 +225,7 @@ export function renderNewPassword(root: HTMLElement): void {
     field({ id: "password", label: "Nueva contraseña", type: "password" }),
     field({ id: "confirm", label: "Confirmar contraseña", type: "password" }),
   );
-  const submit = el("button", { type: "submit", className: "btn-primary" }, ["Guardar contraseña"]);
+  const submit = button({ variant: "primary", type: "submit", label: "Guardar contraseña" });
   form.append(submit);
   form.addEventListener("submit", (e) => {
     e.preventDefault();
@@ -246,7 +266,7 @@ export function renderProfile(root: HTMLElement): void {
       hint: "El correo no se puede editar desde el perfil.",
     }),
   );
-  const save = el("button", { type: "submit", className: "btn-primary" }, ["Guardar cambios"]);
+  const save = button({ variant: "primary", type: "submit", label: "Guardar cambios" });
   form.append(save);
   form.addEventListener("submit", (e) => {
     e.preventDefault();
@@ -260,24 +280,30 @@ export function renderProfile(root: HTMLElement): void {
     renderProfile(root);
   });
 
-  const changePass = el("button", { type: "button", className: "btn-secondary" }, [
-    "Cambiar contraseña",
-  ]);
-  changePass.addEventListener("click", () => navigate("#/perfil/contrasena"));
-
-  const reset = el("button", { type: "button", className: "btn-danger" }, ["Restablecer demo"]);
-  reset.addEventListener("click", () => {
-    store.resetDemo();
-    showToast("Demo restablecida.", "info");
-    navigate("#/");
+  const changePass = button({
+    variant: "secondary",
+    label: "Cambiar contraseña",
+    onClick: () => navigate("#/perfil/contrasena"),
   });
 
-  const logout = el("button", { type: "button", className: "btn-ghost text-error" }, [
-    "Cerrar sesión",
-  ]);
-  logout.addEventListener("click", () => {
-    store.logout();
-    navigate("#/login");
+  const reset = button({
+    variant: "danger",
+    label: "Restablecer demo",
+    onClick: () => {
+      store.resetDemo();
+      showToast("Demo restablecida.", "info");
+      navigate("#/");
+    },
+  });
+
+  const logout = button({
+    variant: "ghost",
+    label: "Cerrar sesión",
+    className: "text-error",
+    onClick: () => {
+      store.logout();
+      navigate("#/login");
+    },
   });
 
   root.append(
@@ -307,7 +333,7 @@ export function renderChangePassword(root: HTMLElement): void {
     field({ id: "next", label: "Nueva contraseña", type: "password" }),
     field({ id: "confirm", label: "Confirmar nueva", type: "password" }),
   );
-  const submit = el("button", { type: "submit", className: "btn-primary" }, ["Actualizar"]);
+  const submit = button({ variant: "primary", type: "submit", label: "Actualizar" });
   form.append(submit);
   form.addEventListener("submit", (e) => {
     e.preventDefault();

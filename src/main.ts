@@ -1,7 +1,8 @@
 import "./styles/main.css";
+import { button } from "./components/buttons";
 import { authShell } from "./components/shell";
 import { pageTitle } from "./components/ui";
-import { clear, el } from "./lib/dom";
+import { clear } from "./lib/dom";
 import { onNotFound, route, startRouter } from "./router";
 import {
   renderChangePassword,
@@ -166,10 +167,13 @@ route("/admin/reportes", () => {
 
 onNotFound(() => {
   clear(app);
-  const go = el("button", { type: "button", className: "btn-primary" }, ["Ir al inicio"]);
-  go.addEventListener("click", () => {
-    const session = store.getSession();
-    location.hash = session ? homeForRole(session.role) : "#/";
+  const go = button({
+    variant: "primary",
+    label: "Ir al inicio",
+    onClick: () => {
+      const session = store.getSession();
+      location.hash = session ? homeForRole(session.role) : "#/";
+    },
   });
   app.append(authShell([pageTitle("Página no encontrada", "La ruta no existe en el prototipo."), go]));
 });

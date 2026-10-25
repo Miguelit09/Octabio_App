@@ -1,5 +1,8 @@
+import { listRow } from "../../components/cards";
+import { groupCard } from "../../components/domain/group-card";
+import { progressBar, progressLabeled } from "../../components/progress";
 import { shell, topBar } from "../../components/shell";
-import { emptyState, pageTitle, progressBar } from "../../components/ui";
+import { emptyState, pageTitle } from "../../components/ui";
 import { clear, el } from "../../lib/dom";
 import { navigate } from "../../router";
 import { store } from "../../state/store";
@@ -36,18 +39,14 @@ export function renderTeacherHome(root: HTMLElement): void {
     const list = el("div", { className: "flex flex-col gap-3" });
     for (const g of groups) {
       const course = store.getState().data.courses.find((c) => c.id === g.courseId);
-      const card = el("button", {
-        type: "button",
-        className: "card-surface w-full text-left",
-      }, [
-        el("h3", { className: "text-lg font-bold text-navy" }, [g.name]),
-        el("p", { className: "mt-1 text-sm text-on-surface-variant" }, [
-          course?.title ?? "Curso",
-          ` · ${g.studentIds.length} estudiantes`,
-        ]),
-      ]);
-      card.addEventListener("click", () => navigate(`#/doc/grupo/${g.id}`));
-      list.append(card);
+      list.append(
+        groupCard({
+          group: g,
+          courseTitle: course?.title,
+          featured: true,
+          onClick: () => navigate(`#/doc/grupo/${g.id}`),
+        }),
+      );
     }
     children.push(list);
   }
@@ -74,17 +73,13 @@ export function renderGroups(root: HTMLElement): void {
     const list = el("div", { className: "flex flex-col gap-3" });
     for (const g of groups) {
       const course = store.getState().data.courses.find((c) => c.id === g.courseId);
-      const card = el("button", {
-        type: "button",
-        className: "card-white w-full text-left",
-      }, [
-        el("h3", { className: "font-bold text-navy" }, [g.name]),
-        el("p", { className: "mt-1 text-sm text-on-surface-variant" }, [
-          `${course?.title ?? "Curso"} · ${g.studentIds.length} estudiantes`,
-        ]),
-      ]);
-      card.addEventListener("click", () => navigate(`#/doc/grupo/${g.id}`));
-      list.append(card);
+      list.append(
+        groupCard({
+          group: g,
+          courseTitle: course?.title,
+          onClick: () => navigate(`#/doc/grupo/${g.id}`),
+        }),
+      );
     }
     children.push(list);
   }
@@ -110,22 +105,15 @@ export function renderGroupDetail(root: HTMLElement, groupId: string): void {
     const student = store.getState().data.users.find((u) => u.id === studentId);
     if (!student) continue;
     const pct = store.courseProgress(studentId, group.courseId);
-    const row = el("button", {
-      type: "button",
-      className: "card-white w-full text-left",
-    }, [
-      el("div", { className: "flex items-center justify-between gap-3" }, [
-        el("div", {}, [
-          el("h3", { className: "font-bold text-navy" }, [student.name]),
-          el("p", { className: "text-sm text-on-surface-variant" }, [student.email]),
-        ]),
-        el("span", { className: "text-sm font-bold text-primary-container" }, [`${pct}%`]),
+    const row = listRow({
+      title: student.name,
+      subtitle: student.email,
+      trailing: el("span", { className: "text-sm font-bold text-primary-container" }, [
+        `${pct}%`,
       ]),
-      el("div", { className: "mt-3" }, [progressBar(pct)]),
-    ]);
-    row.addEventListener("click", () =>
-      navigate(`#/doc/estudiante/${studentId}?grupo=${groupId}`),
-    );
+      onClick: () => navigate(`#/doc/estudiante/${studentId}?grupo=${groupId}`),
+    });
+    row.append(el("div", { className: "mt-3" }, [progressBar(pct)]));
     list.append(row);
   }
 
@@ -184,7 +172,9 @@ export function renderStudentFile(
           el("p", { className: "mt-1 text-sm text-on-surface-variant" }, [
             `${e.completedContentIds.length} contenidos completados`,
           ]),
-          el("div", { className: "mt-3" }, [progressBar(pct, pct === 100)]),
+          el("div", { className: "mt-3" }, [
+            progressLabeled({ label: "Progreso", percent: pct, success: pct === 100 }),
+          ]),
         ]),
       );
     }

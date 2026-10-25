@@ -1,6 +1,10 @@
+import { button } from "../../components/buttons";
+import { listRow, surfaceCard } from "../../components/cards";
+import { courseCard } from "../../components/domain/course-card";
+import { progressLabeled } from "../../components/progress";
 import { shell, topBar } from "../../components/shell";
 import { showToast } from "../../components/toast";
-import { emptyState, pageTitle, progressBar } from "../../components/ui";
+import { emptyState, pageTitle } from "../../components/ui";
 import { clear, contentTypeLabel, el } from "../../lib/dom";
 import { navigate } from "../../router";
 import { store } from "../../state/store";
@@ -23,27 +27,6 @@ function homeFallback(role: string): string {
 
 function categoryName(id: string): string {
   return store.getState().data.categories.find((c) => c.id === id)?.name ?? "STEAM";
-}
-
-function courseCard(course: Course, percent?: number): HTMLElement {
-  const card = el("button", {
-    type: "button",
-    className: "card-surface w-full text-left transition active:scale-[0.99]",
-  }, [
-    el("p", { className: "label-caps text-primary-container" }, [categoryName(course.categoryId)]),
-    el("h3", { className: "mt-1 text-lg font-bold text-navy" }, [course.title]),
-    el("p", { className: "mt-1 line-clamp-2 text-sm text-on-surface-variant" }, [course.description]),
-    percent !== undefined
-      ? el("div", { className: "mt-3" }, [
-          el("div", { className: "mb-1 flex justify-between text-xs font-semibold" }, [
-            el("span", {}, ["Progreso"]),
-            el("span", {}, [`${percent}%`]),
-          ]),
-          progressBar(percent),
-        ])
-      : null,
-  ]);
-  return card;
 }
 
 export function renderStudentHome(root: HTMLElement): void {
@@ -75,18 +58,24 @@ export function renderStudentHome(root: HTMLElement): void {
     const pct = store.courseProgress(session.id, continueCourse.id);
     const cont = el("div", { className: "mb-6" }, [
       el("p", { className: "label-caps mb-2" }, ["Continuar"]),
+      courseCard({
+        course: continueCourse,
+        percent: pct,
+        onClick: () => navigate(`#/app/aula/${continueCourse.id}`),
+      }),
     ]);
-    const card = courseCard(continueCourse, pct);
-    card.addEventListener("click", () => navigate(`#/app/aula/${continueCourse.id}`));
-    cont.append(card);
     children.push(cont);
 
     children.push(el("p", { className: "label-caps mb-2" }, ["Mis cursos"]));
     const list = el("div", { className: "flex flex-col gap-3" });
     for (const course of enrolled) {
-      const c = courseCard(course, store.courseProgress(session.id, course.id));
-      c.addEventListener("click", () => navigate(`#/app/aula/${course.id}`));
-      list.append(c);
+      list.append(
+        courseCard({
+          course,
+          percent: store.courseProgress(session.id, course.id),
+          onClick: () => navigate(`#/app/aula/${course.id}`),
+        }),
+      );
     }
     children.push(list);
   }
@@ -173,9 +162,12 @@ export function renderCatalog(root: HTMLElement, query: Record<string, string>):
   } else {
     const list = el("div", { className: "flex flex-col gap-3" });
     for (const course of courses) {
-      const card = courseCard(course);
-      card.addEventListener("click", () => navigate(`#/app/curso/${course.id}`));
-      list.append(card);
+      list.append(
+        courseCard({
+          course,
+          onClick: () => navigate(`#/app/curso/${course.id}`),
+        }),
+      );
     }
     children.push(list);
   }
@@ -202,21 +194,29 @@ export function renderCourseDetail(root: HTMLElement, courseId: string): void {
 
   const actions = el("div", { className: "mt-6 flex flex-col gap-3" });
   if (enrolled) {
-    const go = el("button", { type: "button", className: "btn-primary" }, ["Ir al aula"]);
-    go.addEventListener("click", () => navigate(`#/app/aula/${courseId}`));
-    actions.append(go);
+    actions.append(
+      button({
+        variant: "primary",
+        label: "Ir al aula",
+        onClick: () => navigate(`#/app/aula/${courseId}`),
+      }),
+    );
   } else {
-    const enroll = el("button", { type: "button", className: "btn-primary" }, ["Inscribirme"]);
-    enroll.addEventListener("click", () => {
-      const result = store.enroll(courseId);
-      if (!result.ok) {
-        showToast(result.error, "error");
-        return;
-      }
-      showToast("Inscripción confirmada.", "success");
-      navigate(`#/app/aula/${courseId}`);
-    });
-    actions.append(enroll);
+    actions.append(
+      button({
+        variant: "primary",
+        label: "Inscribirme",
+        onClick: () => {
+          const result = store.enroll(courseId);
+          if (!result.ok) {
+            showToast(result.error, "error");
+            return;
+          }
+          showToast("Inscripción confirmada.", "success");
+          navigate(`#/app/aula/${courseId}`);
+        },
+      }),
+    );
   }
 
   root.append(
@@ -225,13 +225,16 @@ export function renderCourseDetail(root: HTMLElement, courseId: string): void {
       activeHref: "#/app/catalogo",
       top: topBar({ title: "Detalle del curso", backHref: "#/app/catalogo" }),
       children: [
-        el("div", { className: "card-surface mb-4" }, [
-          el("p", { className: "label-caps text-primary-container" }, [
-            categoryName(course.categoryId),
-          ]),
-          el("h2", { className: "mt-2 text-2xl font-bold text-navy" }, [course.title]),
-          el("p", { className: "mt-2 text-on-surface-variant" }, [course.description]),
-        ]),
+        surfaceCard({
+          className: "mb-4",
+          children: [
+            el("p", { className: "label-caps text-primary-container" }, [
+              categoryName(course.categoryId),
+            ]),
+            el("h2", { className: "mt-2 text-2xl font-bold text-navy" }, [course.title]),
+            el("p", { className: "mt-2 text-on-surface-variant" }, [course.description]),
+          ],
+        }),
         el("p", { className: "label-caps mb-2" }, ["Temario"]),
         el(
           "ul",
@@ -278,11 +281,7 @@ export function renderClassroom(root: HTMLElement, courseId: string): void {
   const children: HTMLElement[] = [
     pageTitle(course.title, "Aula del curso"),
     el("div", { className: "mb-4" }, [
-      el("div", { className: "mb-1 flex justify-between text-sm font-semibold" }, [
-        el("span", {}, ["Avance global"]),
-        el("span", {}, [`${pct}%`]),
-      ]),
-      progressBar(pct, pct === 100),
+      progressLabeled({ label: "Avance global", percent: pct, success: pct === 100 }),
     ]),
   ];
 
@@ -297,27 +296,20 @@ export function renderClassroom(root: HTMLElement, courseId: string): void {
     const list = el("div", { className: "flex flex-col gap-3" });
     for (const item of contents) {
       const done = enrollment?.completedContentIds.includes(item.id);
-      const row = el("button", {
-        type: "button",
-        className: `card-white w-full text-left ${done ? "border-success" : ""}`,
-      }, [
-        el("div", { className: "flex items-start justify-between gap-3" }, [
-          el("div", {}, [
-            el("p", { className: "label-caps" }, [contentTypeLabel(item.type)]),
-            el("h3", { className: "mt-1 font-bold text-navy" }, [item.title]),
-            el("p", { className: "mt-1 text-sm text-on-surface-variant" }, [item.description]),
-          ]),
-          el("span", {
+      list.append(
+        listRow({
+          eyebrow: contentTypeLabel(item.type),
+          title: item.title,
+          subtitle: item.description,
+          borderSuccess: Boolean(done),
+          trailing: el("span", {
             className: `shrink-0 rounded-full px-2 py-1 text-xs font-bold ${
               done ? "bg-success-container text-success" : "bg-surface-high text-on-surface-variant"
             }`,
           }, [done ? "Hecho" : "Pendiente"]),
-        ]),
-      ]);
-      row.addEventListener("click", () =>
-        navigate(`#/app/contenido/${courseId}/${item.id}`),
+          onClick: () => navigate(`#/app/contenido/${courseId}/${item.id}`),
+        }),
       );
-      list.append(row);
     }
     children.push(list);
   }
@@ -369,16 +361,15 @@ function viewerPlaceholder(item: ContentItem): HTMLElement {
       item.body ?? item.description,
     ]);
   }
-  return el("div", { className: "card-surface" }, [
-    el("p", { className: "font-bold text-navy" }, ["Recurso STEAM"]),
-    el("p", { className: "mt-2 text-sm text-on-surface-variant" }, [
-      "Actividad externa simulada. En producción abriría un enlace o laboratorio.",
-    ]),
-    el("button", {
-      type: "button",
-      className: "btn-secondary mt-4",
-    }, ["Abrir recurso (simulado)"]),
-  ]);
+  return surfaceCard({
+    children: [
+      el("p", { className: "font-bold text-navy" }, ["Recurso STEAM"]),
+      el("p", { className: "mt-2 text-sm text-on-surface-variant" }, [
+        "Actividad externa simulada. En producción abriría un enlace o laboratorio.",
+      ]),
+      button({ variant: "secondary", label: "Abrir recurso (simulado)", className: "mt-4" }),
+    ],
+  });
 }
 
 export function renderContentViewer(
@@ -417,17 +408,19 @@ export function renderContentViewer(
     return;
   }
 
-  const complete = el("button", { type: "button", className: "btn-primary mt-6" }, [
-    "Marcar como completado",
-  ]);
-  complete.addEventListener("click", () => {
-    const result = store.completeContent(courseId, contentId);
-    if (!result.ok) {
-      showToast(result.error, "error");
-      return;
-    }
-    showToast("Progreso actualizado.", "success");
-    navigate(`#/app/aula/${courseId}`);
+  const complete = button({
+    variant: "primary",
+    label: "Marcar como completado",
+    className: "mt-6",
+    onClick: () => {
+      const result = store.completeContent(courseId, contentId);
+      if (!result.ok) {
+        showToast(result.error, "error");
+        return;
+      }
+      showToast("Progreso actualizado.", "success");
+      navigate(`#/app/aula/${courseId}`);
+    },
   });
 
   root.append(
@@ -472,17 +465,18 @@ export function renderProgress(root: HTMLElement): void {
       const course = data.courses.find((c) => c.id === e.courseId);
       if (!course) continue;
       const pct = store.courseProgress(session.id, course.id);
-      const card = el("div", { className: "card-white" }, [
-        el("h3", { className: "font-bold text-navy" }, [course.title]),
-        el("div", { className: "mt-3" }, [
-          el("div", { className: "mb-1 flex justify-between text-sm font-semibold" }, [
-            el("span", {}, ["Completado"]),
-            el("span", {}, [`${pct}%`]),
+      list.append(
+        el("div", { className: "card-white" }, [
+          el("h3", { className: "font-bold text-navy" }, [course.title]),
+          el("div", { className: "mt-3" }, [
+            progressLabeled({
+              label: "Completado",
+              percent: pct,
+              success: pct === 100,
+            }),
           ]),
-          progressBar(pct, pct === 100),
         ]),
-      ]);
-      list.append(card);
+      );
     }
     children.push(list);
   }

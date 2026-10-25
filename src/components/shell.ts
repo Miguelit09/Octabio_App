@@ -11,6 +11,7 @@ import {
 import { el } from "../lib/dom";
 import { navigate } from "../router";
 import type { Role } from "../state/types";
+import { button } from "./buttons";
 import { icon } from "./icons";
 
 interface NavItem {
@@ -76,14 +77,12 @@ export function topBar(opts: {
   right?: HTMLElement | null;
 }): HTMLElement {
   const left = opts.backHref
-    ? (() => {
-        const b = el("button", {
-          type: "button",
-          className: "btn-ghost -ml-2",
-        }, ["← Volver"]);
-        b.addEventListener("click", () => navigate(opts.backHref!));
-        return b;
-      })()
+    ? button({
+        variant: "ghost",
+        label: "← Volver",
+        className: "-ml-2",
+        onClick: () => navigate(opts.backHref!),
+      })
     : el("div", { className: "w-16" });
 
   return el(
@@ -121,9 +120,9 @@ export function authShell(children: HTMLElement[]): HTMLElement {
 }
 
 export function logoutButton(): HTMLElement {
-  const btn = el("button", { type: "button", className: "btn-ghost text-error" }, [
-    icon(LogOut, "h-4 w-4"),
-    "Salir",
-  ]);
-  return btn;
+  return button({
+    variant: "ghost",
+    className: "text-error",
+    children: [icon(LogOut, "h-4 w-4"), "Salir"],
+  });
 }
